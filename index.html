@@ -1,34 +1,53 @@
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com";
-  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Briz-Messenger | Live</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        .nav { background: #000; color: #fff; padding: 15px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 20px; }
+        .post { background: #fff; max-width: 500px; margin: 15px auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .badge { color: #1877f2; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .author { font-weight: bold; display: block; margin: 5px 0; }
+        .content { color: #1c1e21; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <div class="nav">BRIZ-MESSENGER</div>
+    <div id="feed">Checking global brain...</div>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB8emEQNjFrizdvb6i2jftipgKROB_T6Q4",
-    authDomain: "briz-messenger.firebaseapp.com",
-    projectId: "briz-messenger",
-    storageBucket: "briz-messenger.firebasestorage.app",
-    messagingSenderId: "334191649483",
-    appId: "1:334191649483:web:741fd0808907b3e0a6b14e"
-  };
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com";
+      import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+      const firebaseConfig = {
+        apiKey: "AIzaSyB8emEQNjFrizdvb6i2jftipgKROB_T6Q4",
+        authDomain: "briz-messenger.firebaseapp.com",
+        projectId: "briz-messenger",
+        storageBucket: "briz-messenger.firebasestorage.app",
+        messagingSenderId: "334191649483",
+        appId: "1:334191649483:web:741fd0808907b3e0a6b14e"
+      };
 
-  // This "onSnapshot" makes the timeline update INSTANTLY
-  onSnapshot(collection(db, "posts"), (querySnapshot) => {
-    let feedHTML = "";
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      feedHTML += `
-        <div class="post">
-          <span class="badge">✓ ${data.status || 'Verified User'}</span>
-          <div style="font-weight:bold; color: #000;">${data.author}</div>
-          <div class="content">${data.content}</div>
-          <div style="font-size:0.7rem; color:gray;">${data.timestamp ? data.timestamp.toDate().toLocaleString() : ''}</div>
-        </div>`;
-    });
-    document.getElementById("feed").innerHTML = feedHTML || "No posts yet. Start the interaction, CEO!";
-  }, (error) => {
-    document.getElementById("feed").innerHTML = "Error: " + error.message;
-  });
-</script>
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // LIVE SNAPSHOT: This pulls your "posts" collection
+      onSnapshot(collection(db, "posts"), (snapshot) => {
+        let html = "";
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          html += `
+            <div class="post">
+              <span class="badge">✓ ${data.status || 'USER'}</span>
+              <span class="author">${data.author || 'Anonymous'}</span>
+              <div class="content">${data.content}</div>
+            </div>`;
+        });
+        document.getElementById("feed").innerHTML = html || "Brain is empty. Add a post in Firebase!";
+      }, (error) => {
+        document.getElementById("feed").innerHTML = "Connection Error: " + error.message;
+      });
+    </script>
+</body>
+</html>
