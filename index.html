@@ -1,57 +1,34 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Briz-Messenger | Live Feed</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; }
-        .nav { background: #000; color: #fff; padding: 1rem; text-align: center; font-weight: bold; font-size: 1.5rem; }
-        .post { background: #fff; max-width: 500px; margin: 20px auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .badge { color: #1877f2; font-size: 0.9rem; font-weight: bold; }
-        .content { font-size: 1.1rem; margin-top: 10px; color: #1c1e21; }
-    </style>
-</head>
-<body>
-    <div class="nav">BRIZ-MESSENGER</div>
-    <div id="feed">
-        <!-- Live Data Loading... -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com";
+  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB8emEQNjFrizdvb6i2jftipgKROB_T6Q4",
+    authDomain: "briz-messenger.firebaseapp.com",
+    projectId: "briz-messenger",
+    storageBucket: "briz-messenger.firebasestorage.app",
+    messagingSenderId: "334191649483",
+    appId: "1:334191649483:web:741fd0808907b3e0a6b14e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // This "onSnapshot" makes the timeline update INSTANTLY
+  onSnapshot(collection(db, "posts"), (querySnapshot) => {
+    let feedHTML = "";
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      feedHTML += `
         <div class="post">
-            <span class="badge">✓ VERIFIED CEO</span>
-            <div class="content">Loading global interactions...</div>
-        </div>
-    </div>
-
-    <!-- The Connection to your Firebase Brain -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com";
-      import { getFirestore, collection, getDocs } from "https://www.gstatic.com";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyB8emEQNjFrizdvb6i2jftipgKROB_T6Q4",
-        authDomain: "briz-messenger.firebaseapp.com",
-        projectId: "briz-messenger",
-        storageBucket: "briz-messenger.firebasestorage.app",
-        messagingSenderId: "334191649483",
-        appId: "1:334191649483:web:741fd0808907b3e0a6b14e"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-
-      async function loadPosts() {
-        const querySnapshot = await getDocs(collection(db, "posts"));
-        let feedHTML = "";
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          feedHTML += `
-            <div class="post">
-              <span class="badge">✓ ${data.status || 'Verified User'}</span>
-              <div style="font-weight:bold">${data.author}</div>
-              <div class="content">${data.content}</div>
-            </div>`;
-        });
-        document.getElementById("feed").innerHTML = feedHTML;
-      }
-      loadPosts();
-    </script>
-</body>
-</html>
+          <span class="badge">✓ ${data.status || 'Verified User'}</span>
+          <div style="font-weight:bold; color: #000;">${data.author}</div>
+          <div class="content">${data.content}</div>
+          <div style="font-size:0.7rem; color:gray;">${data.timestamp ? data.timestamp.toDate().toLocaleString() : ''}</div>
+        </div>`;
+    });
+    document.getElementById("feed").innerHTML = feedHTML || "No posts yet. Start the interaction, CEO!";
+  }, (error) => {
+    document.getElementById("feed").innerHTML = "Error: " + error.message;
+  });
+</script>
