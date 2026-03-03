@@ -1,53 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Briz-Messenger | Live</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRIZ-MESSENGER | Global</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .nav { background: #000; color: #fff; padding: 15px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 20px; }
-        .post { background: #fff; max-width: 500px; margin: 15px auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .badge { color: #1877f2; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-        .author { font-weight: bold; display: block; margin: 5px 0; }
-        .content { color: #1c1e21; line-height: 1.4; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+        .header { background-color: #000; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 500px; margin: 20px auto; padding: 10px; }
+        .post-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        textarea { width: 100%; border: none; font-size: 16px; outline: none; resize: none; height: 60px; }
+        .briz-button { background-color: #1877f2; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; float: right; }
+        .post { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 15px; position: relative; }
+        .badge { color: #1877f2; font-size: 12px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 4px; }
+        .author { font-weight: bold; color: #1c1e21; font-size: 15px; }
+        .content { margin-top: 8px; color: #050505; line-height: 1.4; font-size: 15px; }
+        .time { font-size: 11px; color: #65676b; margin-top: 10px; }
+        .status-msg { text-align: center; color: #65676b; font-size: 14px; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="nav">BRIZ-MESSENGER</div>
-    <div id="feed">Checking global brain...</div>
+
+    <div class="header">BRIZ-MESSENGER</div>
+
+    <div class="container">
+        <!-- THE POSTING BOX -->
+        <div class="post-box">
+            <textarea id="postInput" placeholder="What's on your mind, Brian?"></textarea>
+            <button class="briz-button" id="btnPost">Briz It!</button>
+            <div style="clear:both"></div>
+        </div>
+
+        <!-- THE GLOBAL TIMELINE -->
+        <div id="feed">
+            <div class="status-msg">Connecting to Global Brain...</div>
+        </div>
+    </div>
 
     <script type="module">
-      import { initializeApp } from "https://www.gstatic.com";
-      import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com";
+        import { initializeApp } from "https://www.gstatic.com";
+        import { initializeFirestore, collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyB8emEQNjFrizdvb6i2jftipgKROB_T6Q4",
-        authDomain: "briz-messenger.firebaseapp.com",
-        projectId: "briz-messenger",
-        storageBucket: "briz-messenger.firebasestorage.app",
-        messagingSenderId: "334191649483",
-        appId: "1:334191649483:web:741fd0808907b3e0a6b14e"
-      };
+        // Your Verified Credentials
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8emEQNjFrizdvb6i2jftipgKROB_T6Q4",
+            authDomain: "briz-messenger.firebaseapp.com",
+            projectId: "briz-messenger",
+            storageBucket: "briz-messenger.firebasestorage.app",
+            messagingSenderId: "334191649483",
+            appId: "1:334191649483:web:741fd0808907b3e0a6b14e"
+        };
 
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
+        // Initialize Firebase with Force-Connection
+        const app = initializeApp(firebaseConfig);
+        const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 
-      // LIVE SNAPSHOT: This pulls your "posts" collection
-      onSnapshot(collection(db, "posts"), (snapshot) => {
-        let html = "";
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          html += `
-            <div class="post">
-              <span class="badge">✓ ${data.status || 'USER'}</span>
-              <span class="author">${data.author || 'Anonymous'}</span>
-              <div class="content">${data.content}</div>
-            </div>`;
+        const feedContainer = document.getElementById('feed');
+        const postInput = document.getElementById('postInput');
+        const btnPost = document.getElementById('btnPost');
+
+        // 1. LIVE FEED: Pulls posts from the Brain
+        onSnapshot(collection(db, "posts"), (snapshot) => {
+            let html = "";
+            const docs = [];
+            snapshot.forEach(doc => docs.push({id: doc.id, ...doc.data()}));
+            
+            // Sort by time (newest first)
+            docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+            docs.forEach(data => {
+                html += `
+                    <div class="post">
+                        <span class="badge">✓ ${data.status || 'Verified User'}</span>
+                        <span class="author">${data.author || 'Anonymous'}</span>
+                        <div class="content">${data.content}</div>
+                        <div class="time">${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'Just now'}</div>
+                    </div>`;
+            });
+            feedContainer.innerHTML = html || '<div class="status-msg">No posts yet. Be the first to Briz!</div>';
+        }, (error) => {
+            feedContainer.innerHTML = `<div class="status-msg" style="color:red">Error: ${error.message}</div>`;
         });
-        document.getElementById("feed").innerHTML = html || "Brain is empty. Add a post in Firebase!";
-      }, (error) => {
-        document.getElementById("feed").innerHTML = "Connection Error: " + error.message;
-      });
+
+        // 2. BRIZ IT: Saves new posts to the Brain
+        btnPost.onclick = async () => {
+            const text = postInput.value.trim();
+            if(!text) return alert("Write something first!");
+            
+            btnPost.disabled = true;
+            btnPost.innerText = "Posting...";
+
+            try {
+                await addDoc(collection(db, "posts"), {
+                    author: "BRIAN OTIENO ODHIAMBO",
+                    content: text,
+                    status: "Verified CEO",
+                    timestamp: serverTimestamp()
+                });
+                postInput.value = "";
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+            btnPost.disabled = false;
+            btnPost.innerText = "Briz It!";
+        };
     </script>
 </body>
 </html>
